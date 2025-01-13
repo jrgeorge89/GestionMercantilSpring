@@ -13,11 +13,14 @@
 				{
 					"name": "Register User",
 					"request": {
+						"auth": {
+							"type": "noauth"
+						},
 						"method": "POST",
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"username\": \"admin@example.com\",\r\n    \"firstname\": \"Jorge\",\r\n    \"lastname\": \"Rincon\",\r\n    \"country\": \"Colombia\",\r\n    \"password\": \"admin123\"\r\n}\r\n",
+							"raw": "{\r\n    \"username\": \"admin@example.com\",\r\n    \"firstname\": \"Jorge\",\r\n    \"lastname\": \"Rincon\",\r\n    \"country\": \"Colombia\",\r\n    \"password\": \"admin123\"\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -131,7 +134,7 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{base_url}}/api/businessman?name=Comerciante 1&municipalitieId=2&size=5&page=0",
+							"raw": "{{base_url}}/api/businessman?size=5&page=0",
 							"host": [
 								"{{base_url}}"
 							],
@@ -142,20 +145,22 @@
 							"query": [
 								{
 									"key": "name",
-									"value": "Comerciante 1"
+									"value": "comercial",
+									"disabled": true
 								},
 								{
-									"key": "municipalitieId",
-									"value": "2"
+									"key": "municipaltieId",
+									"value": "3",
+									"disabled": true
 								},
 								{
 									"key": "registrationDate",
-									"value": "2025-01-09",
+									"value": "2024-01-11",
 									"disabled": true
 								},
 								{
 									"key": "status",
-									"value": "Cancelado",
+									"value": "inactivo",
 									"disabled": true
 								},
 								{
@@ -169,7 +174,116 @@
 							]
 						}
 					},
-					"response": []
+					"response": [
+						{
+							"name": "Search by Filter / Pagination",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/businessman?municipalitieId=1&status=Inactivo&size=5&page=0",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"businessman"
+									],
+									"query": [
+										{
+											"key": "name",
+											"value": "noah",
+											"disabled": true
+										},
+										{
+											"key": "municipalitieId",
+											"value": "1"
+										},
+										{
+											"key": "registrationDate",
+											"value": "2024-01-08",
+											"disabled": true
+										},
+										{
+											"key": "status",
+											"value": "Inactivo"
+										},
+										{
+											"key": "size",
+											"value": "5"
+										},
+										{
+											"key": "page",
+											"value": "0"
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Vary",
+									"value": "Origin"
+								},
+								{
+									"key": "Vary",
+									"value": "Access-Control-Request-Method"
+								},
+								{
+									"key": "Vary",
+									"value": "Access-Control-Request-Headers"
+								},
+								{
+									"key": "X-Content-Type-Options",
+									"value": "nosniff"
+								},
+								{
+									"key": "X-XSS-Protection",
+									"value": "0"
+								},
+								{
+									"key": "Cache-Control",
+									"value": "no-cache, no-store, max-age=0, must-revalidate"
+								},
+								{
+									"key": "Pragma",
+									"value": "no-cache"
+								},
+								{
+									"key": "Expires",
+									"value": "0"
+								},
+								{
+									"key": "X-Frame-Options",
+									"value": "DENY"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Transfer-Encoding",
+									"value": "chunked"
+								},
+								{
+									"key": "Date",
+									"value": "Sat, 11 Jan 2025 16:48:50 GMT"
+								},
+								{
+									"key": "Keep-Alive",
+									"value": "timeout=60"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"success\": true,\n    \"message\": \"Comerciales consultados exitosamente.\",\n    \"data\": {\n        \"content\": [\n            {\n                \"businessman_id\": 7,\n                \"nombreRazonSocial\": \"Noah Rincon\",\n                \"department\": {\n                    \"id\": 1,\n                    \"name\": \"Cundinamarca\",\n                    \"municipalities\": null\n                },\n                \"municipality\": {\n                    \"id\": 1,\n                    \"name\": \"Bogotá\"\n                },\n                \"telefono\": \"123456789\",\n                \"correoElectronico\": \"Noah@example.com\",\n                \"fechaRegistro\": \"2024-01-08\",\n                \"estado\": \"Inactivo\",\n                \"fechaActualizacion\": null,\n                \"usuario\": null,\n                \"totalActivos\": 0,\n                \"cantidadEmpleados\": 0\n            }\n        ],\n        \"pageable\": {\n            \"pageNumber\": 0,\n            \"pageSize\": 5,\n            \"sort\": {\n                \"empty\": true,\n                \"unsorted\": true,\n                \"sorted\": false\n            },\n            \"offset\": 0,\n            \"unpaged\": false,\n            \"paged\": true\n        },\n        \"last\": true,\n        \"totalElements\": 1,\n        \"totalPages\": 1,\n        \"first\": true,\n        \"size\": 5,\n        \"number\": 0,\n        \"sort\": {\n            \"empty\": true,\n            \"unsorted\": true,\n            \"sorted\": false\n        },\n        \"numberOfElements\": 1,\n        \"empty\": false\n    }\n}"
+						}
+					]
 				},
 				{
 					"name": "Consultar Businessman ID",
@@ -177,14 +291,14 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{base_url}}/api/businessman/1",
+							"raw": "{{base_url}}/api/businessman/2",
 							"host": [
 								"{{base_url}}"
 							],
 							"path": [
 								"api",
 								"businessman",
-								"1"
+								"2"
 							]
 						}
 					},
@@ -197,7 +311,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"nombreRazonSocial\": \"John Doe\",\r\n    \"department\": { \"id\": 1 },\r\n    \"municipality\": { \"id\": 1 },\r\n    \"telefono\": \"123456789\",\r\n    \"correoElectronico\": \"john.doe@example.com\",\r\n    \"fechaRegistro\": \"2024-01-09\",\r\n    \"estado\": \"Activo\",\r\n    \"usuario\": \"admin\"\r\n}\r\n",
+							"raw": "{\r\n    \"nombreRazonSocial\": \"Noah\",\r\n    \"department\": { \"id\": 1 },\r\n    \"municipality\": { \"id\": 1 },\r\n    \"telefono\": \"123456789\",\r\n    \"correoElectronico\": \"noah@example.com\",\r\n    \"fechaRegistro\": \"2024-01-11\",\r\n    \"estado\": \"Activo\",\r\n    \"usuario\": \"USER\"\r\n}\r\n",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -224,7 +338,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"nombreRazonSocial\": \"John Doe Updated\",\r\n    \"department\": { \"id\": 1 },\r\n    \"municipality\": { \"id\": 1 },\r\n    \"telefono\": \"987654321\",\r\n    \"correoElectronico\": \"john.doe.updated@example.com\",\r\n    \"fechaRegistro\": \"2025-01-05\",\r\n    \"estado\": \"Activo\",\r\n    \"usuario\": \"admin\"\r\n}\r\n",
+							"raw": "{\r\n    \"nombreRazonSocial\": \"John Doe Updated\",\r\n    \"department\": { \"id\": 1 },\r\n    \"municipality\": { \"id\": 1 },\r\n    \"telefono\": \"987654321\",\r\n    \"correoElectronico\": \"john.doe.updated@example.com\",\r\n    \"fechaRegistro\": \"2025-01-05\",\r\n    \"estado\": \"Activo\",\r\n    \"usuario\": \"ADMIN\"\r\n}\r\n",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -232,14 +346,14 @@
 							}
 						},
 						"url": {
-							"raw": "{{base_url}}/api/businessman/4",
+							"raw": "{{base_url}}/api/businessman/1",
 							"host": [
 								"{{base_url}}"
 							],
 							"path": [
 								"api",
 								"businessman",
-								"4"
+								"1"
 							]
 						}
 					},
@@ -435,7 +549,7 @@
 		"bearer": [
 			{
 				"key": "token",
-				"value": "eyJhbGciOiJIUzI1NiJ9.eyJyb2xlIjoiVVNFUiIsInN1YiI6ImFkbWluQGV4YW1wbGUuY29tIiwiaWF0IjoxNzM2NDkzMDA1LCJleHAiOjE3MzY1MjkwMDV9.HPoSaYk5XVCHm11NIAj_sX0nigVkNXLnYcpcH4NZBDk",
+				"value": "eyJhbGciOiJIUzI1NiJ9.eyJmaXJzdE5hbWUiOiJVc3VhcmlvIiwibGFzdE5hbWUiOiJBZG1pbiIsInJvbGUiOiJBZG1pbmlzdHJhZG9yIiwic3ViIjoiYWRtaW5AZXhhbXBsZS5jb20iLCJpYXQiOjE3MzY3NTEyNTYsImV4cCI6MTczNjc4NzI1Nn0.cljf1zzyraarHNgNkGfXNMv7ksbzl0r3MwQKKAOxICk",
 				"type": "string"
 			}
 		]

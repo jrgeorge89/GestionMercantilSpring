@@ -4,7 +4,6 @@ import com.gestion.mercantil.entity.Businessman;
 import com.gestion.mercantil.entity.Department;
 import com.gestion.mercantil.entity.Municipality;
 import com.gestion.mercantil.repository.BusinessmanRepository;
-import com.gestion.mercantil.util.DateFormatter;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -19,14 +18,12 @@ import jakarta.persistence.StoredProcedureQuery;
 import javax.sql.DataSource;
 import java.sql.CallableStatement;
 import java.sql.Connection;
+import java.sql.Date;
 import java.sql.ResultSet;
+import java.time.LocalDate;
 import java.sql.SQLException;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
-import java.util.TimeZone;
 import oracle.jdbc.OracleTypes;
 
 @Service
@@ -38,9 +35,10 @@ public class BusinessmanService {
     private final DataSource dataSource;
 
     @Transactional(readOnly = true)
-    public Page<Businessman> findAll(String name, Integer municipalitieId, Date registrationDate, String status, PageRequest pageRequest) {
+    public Page<Businessman> findAll(String name, Integer municipalitieId, LocalDate registrationDate, String status, PageRequest pageRequest) {
         List<Businessman> businessmen = new ArrayList<>();
-        String query = "{ call ? := test.businessman_pkg.get_businessman(?, ?, ?, ?, ?, ?) }";
+        int totalRecords = 0;
+        String query = "{ call ? := test.businessman_pkg.get_businessman(?, ?, ?, ?, ?, ?, ?) }";
 
         try (Connection connection = dataSource.getConnection();
              CallableStatement stmt = connection.prepareCall(query)) {
@@ -49,26 +47,36 @@ public class BusinessmanService {
             stmt.registerOutParameter(1, OracleTypes.CURSOR);
             stmt.setString(2, name);
             stmt.setObject(3, municipalitieId);
-            stmt.setDate(4, registrationDate != null ? new java.sql.Date(registrationDate.getTime()) : null);
+            stmt.setObject(4, registrationDate != null ? Date.valueOf(registrationDate) : null);
             stmt.setString(5, status);
             stmt.setInt(6, pageRequest.getPageNumber() + 1);
             stmt.setInt(7, pageRequest.getPageSize());
+
+            // Registrar el parámetro de salida para el total de registros
+            stmt.registerOutParameter(8, OracleTypes.INTEGER);
 
             // Ejecutar la llamada
             stmt.execute();
 
             // Obtener el cursor de salida y mapear los resultados
             try (ResultSet rs = (ResultSet) stmt.getObject(1)) {
+                boolean firstRecord = true;
                 while (rs.next()) {
+                    if (firstRecord) {
+                        totalRecords = rs.getInt("total_records");
+                        firstRecord = false;
+                    }
                     businessmen.add(mapToBusinessmanResult(rs));
                 }
             }
+
         } catch (SQLException e) {
-            throw new RuntimeException("Error ejecutando el procedimiento almacenado: " + e.getMessage(), e);
+            throw new RuntimeException("Error al consultar todos los Comerciantes: " + e.getMessage(), e);
         }
 
-        return new PageImpl<>(businessmen, pageRequest, businessmen.size());
+        return new PageImpl<>(businessmen, pageRequest, totalRecords);
     }
+    
 
     @Transactional(readOnly = true)
     public Businessman findById(Integer id) {
@@ -93,10 +101,10 @@ public class BusinessmanService {
                 }
             }
         } catch (SQLException e) {
-            throw new RuntimeException("Error ejecutando el procedimiento almacenado: " + e.getMessage(), e);
+            throw new RuntimeException("Error al consultar al Comerciante por ID: " + e.getMessage(), e);
         }
     }
-
+    
     private Businessman mapToBusinessmanResult(ResultSet rs) throws SQLException {
         Businessman businessman = new Businessman();
         businessman.setBusinessman_id(rs.getInt("businessman_id"));
@@ -112,11 +120,21 @@ public class BusinessmanService {
 
         businessman.setTelefono(rs.getString("telefono"));
         businessman.setCorreoElectronico(rs.getString("correo_electronico"));
-        businessman.setFechaRegistro(rs.getDate("fecha_registro"));
         businessman.setEstado(rs.getString("estado"));
         businessman.setTotalActivos(rs.getBigDecimal("total_activos"));
         businessman.setCantidadEmpleados(rs.getInt("cantidad_empleados"));
 
+        Date sqlDate = rs.getDate("fecha_registro");
+        if (sqlDate != null) {
+            LocalDate localDate = sqlDate.toLocalDate();
+            businessman.setFechaRegistro(localDate);
+        }
+
+        try {
+            businessman.setCantidadEstablecimientos(rs.getInt("cantidad_establecimientos"));
+        } catch (SQLException e) {
+            businessman.setCantidadEstablecimientos(null);
+        }
         try {
             businessman.setFechaActualizacion(rs.getDate("fecha_actualizacion"));
         } catch (SQLException e) {
@@ -131,27 +149,17 @@ public class BusinessmanService {
         return businessman;
     }
     
+
     @Transactional
     public Businessman create(Businessman businessman) {
-        // Convertir la fecha al formato 'dd/MM/yy'
-        String formattedDateStr = DateFormatter.convertDateFormat(businessman.getFechaRegistro());
-        
-        Date formattedDate;
-        try {
-            SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yy");
-            sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
-            formattedDate = new SimpleDateFormat("dd/MM/yy").parse(formattedDateStr);
-            businessman.setFechaRegistro(formattedDate);
-        } catch (ParseException e) {
-            throw new RuntimeException("Error formateando fecha: " + e.getMessage(), e);
-        }
-        
-        // Depuración para imprimir el valor ingresado y el valor formateado
-        System.out.println("Fecha ingresada: " + businessman.getFechaRegistro());
-        System.out.println("Fecha formateada: " + formattedDateStr);
-        System.out.println("Objeto Fecha formateada: " + formattedDate);
+        // Convertir la fecha de LocalDate a java.sql.Date
+        LocalDate localDate = businessman.getFechaRegistro();
+        Date sqlDate = Date.valueOf(localDate);
 
-        // Crea y ejecuta el procedimiento almacenado con la fecha formateada
+        // Depuración para imprimir el valor ingresado y el valor formateado
+//        System.out.println("Fecha ingresada: " + localDate);
+//        System.out.println("Fecha SQL: " + sqlDate);
+
         StoredProcedureQuery query = entityManager.createStoredProcedureQuery("test.businessman_pkg.insert_businessman")
                 .registerStoredProcedureParameter("p_name", String.class, ParameterMode.IN)
                 .registerStoredProcedureParameter("p_department_id", Integer.class, ParameterMode.IN)
@@ -168,7 +176,7 @@ public class BusinessmanService {
                 .setParameter("p_municipalitie_id", businessman.getMunicipality().getId())
                 .setParameter("p_phone", businessman.getTelefono())
                 .setParameter("p_email", businessman.getCorreoElectronico())
-                .setParameter("p_registration_date", formattedDate)
+                .setParameter("p_registration_date", sqlDate)
                 .setParameter("p_status", businessman.getEstado())
                 .setParameter("p_user", businessman.getUsuario());
 
@@ -178,11 +186,12 @@ public class BusinessmanService {
         String errorMessage = (String) query.getOutputParameterValue("p_error_message");
 
         if (errorCode != 0) {
-            throw new RuntimeException("Error creando businessman: " + errorMessage);
+            throw new RuntimeException("Error al crear Comerciante: " + errorMessage);
         }
 
         return businessman;
     }
+
 
     @Transactional
     public Businessman update(Integer id, Businessman businessman) {
@@ -214,11 +223,12 @@ public class BusinessmanService {
         String errorMessage = (String) query.getOutputParameterValue("p_error_message");
 
         if (errorCode != 0) {
-            throw new RuntimeException("Error updating businessman: " + errorMessage);
+            throw new RuntimeException("Error al actualizar Comerciante: " + errorMessage);
         }
 
         return businessman;
     }
+    
 
     @Transactional
     public void delete(Integer id) {
@@ -234,9 +244,10 @@ public class BusinessmanService {
         String errorMessage = (String) query.getOutputParameterValue("p_error_message");
 
         if (errorCode != 0) {
-            throw new RuntimeException("Error deleting businessman: " + errorMessage);
+            throw new RuntimeException("Error al eliminar Comerciante: " + errorMessage);
         }
     }
+    
 
     @Transactional
     public Businessman updateStatus(Integer id, String status) {
@@ -254,7 +265,7 @@ public class BusinessmanService {
         String errorMessage = (String) query.getOutputParameterValue("p_error_message");
 
         if (errorCode != 0) {
-            throw new RuntimeException("Error updating businessman status: " + errorMessage);
+            throw new RuntimeException("Error al actualizar el estado del Comerciante: " + errorMessage);
         }
 
         return findById(id);

@@ -17,19 +17,19 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("/auth")
 @RequiredArgsConstructor
 public class AuthController {
-    
-    private final AuthService AuthService;
 
+    private final AuthService AuthService;
+    
     @PostMapping(value = "login")
-    public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest request)
-    {
+    public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest request) {
+        System.out.println("Handling Login Request: " + request.getUsername()); // Log para Login
         return ResponseEntity.ok(AuthService.login(request));
     }
-    
+
     @PostMapping(value = "register")
-    public ResponseEntity<AuthResponse> register(@RequestBody RegisterRequest request)
-    {
+    public ResponseEntity<AuthResponse> register(@RequestBody RegisterRequest request) {
+        System.out.println("Handling Register Request: " + request.getUsername()); // Log para Registro
         return ResponseEntity.ok(AuthService.register(request));
     }
-    
 }
+

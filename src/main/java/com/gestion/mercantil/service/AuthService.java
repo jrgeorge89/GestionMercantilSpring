@@ -1,4 +1,3 @@
-
 package com.gestion.mercantil.service;
 
 import com.gestion.mercantil.dto.AuthResponse;
@@ -24,6 +23,7 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
 
     public AuthResponse register(RegisterRequest request) {
+        System.out.println("Registering user: " + request.getUsername()); // Log para registro
         // Llamamos al procedimiento almacenado para registrar el usuario
         userService.registerUser(
             request.getUsername(), 
@@ -31,21 +31,28 @@ public class AuthService {
             request.getLastname(), 
             request.getCountry(), 
             passwordEncoder.encode(request.getPassword()), 
-            Role.USER.name()
+            Role.Auxiliar.name()
         );
 
         User user = userService.findByUsername(request.getUsername())
             .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
         String token = jwtService.getToken(user);
+        System.out.println("Token generado para el registro: " + token); // Log de token generado
         return AuthResponse.builder()
                 .token(token)
                 .build();
     }
 
     public AuthResponse login(LoginRequest request) {
+        System.out.println("Logging in user: " + request.getUsername()); // Log para inicio de sesión
         // Llamamos a la función almacenada para iniciar sesión
         Optional<User> userOptional = userService.loginUser(request.getUsername(), request.getPassword());
+
+        // Añadir logs de valores de entrada
+        System.out.println("Valor ingresado Usuario: " + request.getUsername());
+        System.out.println("Valor ingresado Password: " + request.getPassword());
+
         User user = userOptional.orElseThrow(() -> new IllegalArgumentException("Nombre de usuario o contraseña no válidos"));
 
         authenticationManager.authenticate(
@@ -53,8 +60,10 @@ public class AuthService {
         );
 
         String token = jwtService.getToken(user);
+        System.out.println("Token generado para el login: " + token); // Log de token generado
         return AuthResponse.builder()
                 .token(token)
                 .build();
     }
+
 }

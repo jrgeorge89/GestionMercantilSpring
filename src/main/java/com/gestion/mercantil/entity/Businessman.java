@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.*;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.Date;
 import org.springframework.format.annotation.DateTimeFormat;
 
@@ -45,7 +46,7 @@ public class Businessman {
     @DateTimeFormat(pattern = "yyyy-MM-dd")
     @NotNull(message = "El campo Fecha de Registro es obligatorio.")
     @PastOrPresent(message = "El campo Fecha de Registro debe ser una fecha pasada o presente.")
-    private Date fechaRegistro;
+    private LocalDate fechaRegistro;
     
     @Column(name = "estado")
     @NotBlank(message = "El campo Estado es obligatorio.")
@@ -62,4 +63,7 @@ public class Businessman {
     
     @Column(name = "cantidad_empleados")
     private Integer cantidadEmpleados;
+    
+    @Column(name = "cantidad_establecimientos")
+    private Integer cantidadEstablecimientos;
 }

@@ -77,9 +77,9 @@ END authentication_pkg;
 
 -- Insertar Datos Semilla para Users
 BEGIN
-  test.authentication_pkg.register_user(p_username => 'admin@example.com', p_firstname => 'Admin', p_lastname => 'User', p_country => 'Country1', p_password => 'admin123', p_role => 'Administrator');
+  test.authentication_pkg.register_user(p_username => 'admin@example.com', p_firstname => 'Usuario', p_lastname => 'Admin', p_country => 'Ciudad 1', p_password => '$2a$10$8dfAQ/s76vbc4e.g4KEqp.0Td5YKfGtCEveJ6DqE9F/207OwAW5tm', p_role => 'Administrador');
 
-  test.authentication_pkg.register_user(p_username => 'auxiliar@example.com', p_firstname => 'Auxiliar', p_lastname => 'User', p_country => 'Country2', p_password => 'auxiliar123', p_role => 'Auxiliar');
+  test.authentication_pkg.register_user(p_username => 'auxiliar@example.com', p_firstname => 'Usuario', p_lastname => 'Registro', p_country => 'Ciudad 2', p_password => '$2a$10$5GOIRFfv9FhBN5mhFqJqfOwRq4J6b6jION4yfEOwZG5QkRv6T7//.', p_role => 'Auxiliar');
 END;
 /
 
@@ -300,7 +300,10 @@ CREATE OR REPLACE PACKAGE test.businessman_pkg IS
     FUNCTION get_businessman_by_id(p_businessman_id NUMBER) RETURN SYS_REFCURSOR;
 
     -- Función para consultar businessman con filtros y paginación
-    FUNCTION get_businessman(p_name VARCHAR2, p_municipalitie_id NUMBER, p_registration_date DATE, p_status VARCHAR2, p_page NUMBER, p_page_size NUMBER) RETURN SYS_REFCURSOR;
+    TYPE ref_cursor IS REF CURSOR;
+    FUNCTION get_businessman(p_name VARCHAR2, p_municipalitie_id NUMBER, p_registration_date DATE,
+                             p_status VARCHAR2, p_page NUMBER, p_page_size NUMBER,
+                             p_total_records OUT NUMBER) RETURN ref_cursor;
 
     -- Procedimiento para insertar un nuevo businessman
     PROCEDURE insert_businessman(
@@ -386,29 +389,36 @@ CREATE OR REPLACE PACKAGE BODY test.businessman_pkg IS
 
     -- Función para consultar businessman con filtros y paginación
     FUNCTION get_businessman(p_name VARCHAR2, p_municipalitie_id NUMBER, p_registration_date DATE,
-                             p_status VARCHAR2, p_page NUMBER, p_page_size NUMBER) RETURN SYS_REFCURSOR IS
-        v_cursor SYS_REFCURSOR;
+                             p_status VARCHAR2, p_page NUMBER, p_page_size NUMBER,
+                             p_total_records OUT NUMBER) RETURN ref_cursor IS
+        v_cursor ref_cursor;
         v_offset NUMBER := (p_page - 1) * p_page_size;
     BEGIN
         OPEN v_cursor FOR
-            SELECT * FROM (
+            SELECT businessman_id, nombre_razon_social, department_id, departamento, municipalitie_id,
+                   municipio, telefono, correo_electronico, fecha_registro, estado, total_activos,
+                   cantidad_empleados, cantidad_establecimientos, rnum, total_records
+            FROM (
                 SELECT c.businessman_id, c.nombre_razon_social, d.id AS department_id, d.name AS departamento,
                        m.id AS municipalitie_id, m.name AS municipio, c.telefono, c.correo_electronico,
                        c.fecha_registro, c.estado, NVL(SUM(e.revenue), 0) AS total_activos,
                        NVL(SUM(e.number_of_employees), 0) AS cantidad_empleados,
-                       ROW_NUMBER() OVER (ORDER BY c.businessman_id) AS rnum
+                       COUNT(e.businessman_id) AS cantidad_establecimientos,
+                       ROW_NUMBER() OVER (ORDER BY c.businessman_id) AS rnum,
+                       COUNT(*) OVER () AS total_records
                 FROM test.businessman c
                 LEFT JOIN test.establishment e ON c.businessman_id = e.businessman_id
                 LEFT JOIN test.departments d ON c.department_id = d.id
                 LEFT JOIN test.municipalities m ON c.municipalitie_id = m.id
-                WHERE (p_name IS NOT NULL AND c.nombre_razon_social LIKE '%' || p_name || '%')
-                   OR (p_municipalitie_id IS NOT NULL AND c.municipalitie_id = p_municipalitie_id)
-                   OR (p_registration_date IS NOT NULL AND c.fecha_registro = p_registration_date)
-                   OR (p_status IS NOT NULL AND c.estado = p_status)
+                WHERE (p_name IS NULL OR UPPER(c.nombre_razon_social) LIKE '%' || UPPER(p_name) || '%')
+                   AND (p_municipalitie_id IS NULL OR c.municipalitie_id = p_municipalitie_id)
+                   AND (p_registration_date IS NULL OR c.fecha_registro = p_registration_date)
+                   AND (p_status IS NULL OR UPPER(c.estado) LIKE '%' || UPPER(p_status) || '%')
                 GROUP BY c.businessman_id, c.nombre_razon_social, d.id, d.name, m.id, m.name,
                          c.telefono, c.correo_electronico, c.fecha_registro, c.estado
             )
             WHERE rnum > v_offset AND rnum <= v_offset + p_page_size;
+    
         RETURN v_cursor;
     END get_businessman;
 

@@ -1,0 +1,5 @@
+admin@example.com
+admin123
+
+auxiliar@example.com
+auxiliar123

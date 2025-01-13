@@ -25,7 +25,9 @@ public class JwtService {
     public String getToken(UserDetails user) {
         User myUser = (User) user;
         Map<String, Object> claims = new HashMap<>();
-        claims.put("role", myUser.getRole().name()); // Agregamos el rol del usuario a los claims
+        claims.put("role", myUser.getRole().name());
+        claims.put("firstName", myUser.getFirstname());
+        claims.put("lastName", myUser.getLastname());
         return getToken(claims, user);
     }
 
